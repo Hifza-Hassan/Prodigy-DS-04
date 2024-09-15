@@ -1,0 +1,49 @@
+pip install nltk seaborn matplotlib
+import nltk
+from nltk.corpus import movie_reviews
+import random
+import pandas as pd
+import seaborn as sns
+import matplotlib.pyplot as plt
+from nltk.sentiment.vader import SentimentIntensityAnalyzer
+
+# Download the necessary dataset and libraries
+nltk.download('movie_reviews')
+nltk.download('vader_lexicon')
+
+# Initialize the Sentiment Intensity Analyzer
+sia = SentimentIntensityAnalyzer()
+
+# Load movie reviews dataset from nltk
+documents = [(list(movie_reviews.words(fileid)), category)
+             for category in movie_reviews.categories()
+             for fileid in movie_reviews.fileids(category)]
+
+# Shuffle the documents
+random.shuffle(documents)
+
+# Create a DataFrame with the text and corresponding label (pos/neg)
+reviews_df = pd.DataFrame(documents, columns=['Review', 'Category'])
+reviews_df['Review'] = reviews_df['Review'].apply(lambda x: ' '.join(x))
+
+# Apply sentiment analysis using VADER
+reviews_df['Sentiment_Score'] = reviews_df['Review'].apply(lambda x: sia.polarity_scores(x)['compound'])
+reviews_df['Sentiment'] = reviews_df['Sentiment_Score'].apply(lambda x: 'Positive' if x >= 0 else 'Negative')
+
+# Plot the distribution of sentiment
+plt.figure(figsize=(8, 6))
+sns.countplot(data=reviews_df, x='Sentiment', palette='coolwarm')
+plt.title('Sentiment Distribution in Movie Reviews')
+plt.show()
+# Plot the sentiment score distribution
+plt.figure(figsize=(8, 6))
+sns.histplot(reviews_df['Sentiment_Score'], bins=20, kde=True, color='purple')
+plt.title('Sentiment Score Distribution in Movie Reviews')
+plt.show()
+# Count and visualize the positive and negative reviews per category
+plt.figure(figsize=(8, 6))
+sns.countplot(data=reviews_df, x='Category', hue='Sentiment', palette='coolwarm')
+plt.title('Positive and Negative Reviews by Category')
+plt.show()
+# Show the first few records of the analyzed data
+reviews_df.head()
